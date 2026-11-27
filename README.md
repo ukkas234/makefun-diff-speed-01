@@ -36,6 +36,16 @@ To rebuild the WebAssembly module from its source:
 node tools/wat.cjs solve.wat solve.wasm
 ```
 
+Memory layout (see `solve.wat`): `out` runs live at 0x80000 and the
+backtrack segments at 0x200000, so `out` holds 196,608 runs — above the
+120,000 theoretical maximum for 60,000-line inputs — and can never
+overwrite segments the merge loop has not read yet. WASM linear memory
+is capped at 10240 pages (640 MiB) so `memory.grow` fails cleanly well
+below the 1024 MB container limit; if the trace ever does not fit, the
+search returns -1, the wrapper releases the WASM instance, and the
+pure-JS search answers instead. `test/stress-many-runs.mjs` covers both
+paths with alternating kept/deleted inputs of 32,770 and 35,000 lines.
+
 ## Run it
 
 ```sh

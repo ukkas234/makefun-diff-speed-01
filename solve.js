@@ -48,7 +48,13 @@ function editRunsWasm(A, a0, a1, B, b0, b1) {
   view.set(A.subarray(a0, a1), 0);
   view.set(B.subarray(b0, b1), WASM_B >> 2);
   const count = w.search(0, N, WASM_B, M, WASM_OUT);
-  if (count < 0) return null; // trace would not fit in memory
+  if (count < 0) {
+    // The trace would not fit: release the WASM instance (and its grown
+    // linear memory) before the JS fallback allocates its own flat trace,
+    // or the two would live side by side inside the 1024 MB container.
+    wasm = false;
+    return null;
+  }
   const out = new Int32Array(w.mem.buffer);
   const base = WASM_OUT >> 2;
   const runs = [];
@@ -109,7 +115,7 @@ function editRuns(A, a0, a1, B, b0, b1) {
   let T = trace;
   let cap = traceCap;
   const ensure = (d) => {
-    const need = ((d * (d + 1)) >> 1) + d + 1;
+    const need = ((d * (d + 1)) / 2) + d + 1;
     if (need <= cap) return;
     let c = cap;
     while (c < need) c *= 2;
@@ -138,8 +144,8 @@ function editRuns(A, a0, a1, B, b0, b1) {
   let endJ = 0;
   outer: for (let d = 1; ; d++) {
     ensure(d);
-    const prevOff = ((d - 1) * d) >> 1;
-    const curOff = (d * (d + 1)) >> 1;
+    const prevOff = ((d - 1) * d) / 2;
+    const curOff = (d * (d + 1)) / 2;
     let k = -d;
     for (let j = 0; j <= d; j++, k += 2) {
       let xDel = -1;
@@ -185,7 +191,7 @@ function editRuns(A, a0, a1, B, b0, b1) {
   y = M;
   for (let d = D; d >= 1; d--) {
     const k = 2 * j - d;
-    const prevOff = ((d - 1) * d) >> 1;
+    const prevOff = ((d - 1) * d) / 2;
     let pxDel = -1;
     let pxIns = -1;
     if (j > 0) pxDel = T[prevOff + j - 1];

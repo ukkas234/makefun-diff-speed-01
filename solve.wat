@@ -2,7 +2,7 @@
 ;; This is the exact rule of the makefun-diff 1.0.0 reference (see solve.js):
 ;; furthest-reaching path per diagonal, deletion wins a deletion-vs-insertion
 ;; tie, no edge diagonal is pruned, equal-line runs are followed to the end.
-;; Written by hand in this session; assembled with tools/wat.js.
+;; Written by hand in this session; assembled with tools/wat.cjs.
 ;; The JavaScript wrapper (solve.js) interns lines, trims the common prefix
 ;; and suffix, and builds the patch text; this module does only the O(D^2)
 ;; search and the backtrack, where D is the edit distance.
@@ -11,15 +11,20 @@
 ;;   A ids ......... 0x00000000 (written by JS, n words)
 ;;   B ids ......... 0x00040000 (written by JS, m words)
 ;;   out runs ...... 0x00080000 (pairs of i32: kind, count; 0=keep 1=del 2=ins)
-;;   seg scratch ... 0x000C0000 (backtrack segments, reverse order)
+;;   seg scratch ... 0x00200000 (backtrack segments, reverse order)
 ;;   trace ......... 0x04000000 (flat trace, round d at offset d*(d+1)/2)
-;; Memory starts at 4096 pages (256 MiB) and grows to at most 16384 (1 GiB).
+;; Memory starts at 4096 pages (256 MiB) and grows to at most 10240 (640 MiB).
+;; $segBase sits at 2 MiB so `out` holds 196,608 runs — above the 120,000
+;; theoretical maximum for WASM_MAX_LINES = 60000 — and can never overwrite
+;; backtrack segments that the merge loop has not read yet. The 640 MiB cap
+;; keeps memory.grow failing cleanly well below the 1024 MB container limit
+;; instead of letting the cgroup OOM killer strike first.
 ;; search returns the number of runs written to $out, or -1 when the trace
 ;; would not fit in memory (the JS wrapper then falls back to its own search).
 (module
-  (memory (export "mem") 4096 16384)
+  (memory (export "mem") 4096 10240)
   (global $traceBase i32 (i32.const 67108864))
-  (global $segBase i32 (i32.const 786432))
+  (global $segBase i32 (i32.const 2097152))
 
   (func (export "search") (param $a i32) (param $n i32) (param $b i32) (param $m i32) (param $out i32) (result i32)
     (local $d i32) (local $j i32) (local $k i32) (local $x i32) (local $y i32)
