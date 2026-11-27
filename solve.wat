@@ -33,6 +33,10 @@
 ;; an insertion needs px - k <= m), and A[nx] === B[ny] can only hold
 ;; while nx < n and ny < m. Round offsets are carried cumulatively
 ;; (curOff(d) = curOff(d-1) + d) instead of recomputed per round.
+;; The inner loop has two forms: while no cell has touched an edge
+;; ($hitEdge == 0) every previous-round entry is interior, so the choice
+;; is a branchless select with no bounds checks; once any cell reaches
+;; x == n or y == m, later rounds use the bounds-checked loop.
 ;; search returns the number of runs written to $out, or -1 when the trace
 ;; would not fit in memory (the JS wrapper then falls back to its own search).
 (module
@@ -47,8 +51,9 @@
     (local $prevOff i32) (local $curOff i32) (local $prevPtr i32) (local $curPtr i32) (local $D i32) (local $endJ i32)
     (local $segCount i32) (local $w i32) (local $r i32)
     (local $kind i32) (local $cnt i32) (local $tmp i32) (local $need i32) (local $snake i32)
-    (local $prevPx i32) (local $curPx i32) (local $grow i32) (local $off i32)
+    (local $prevPx i32) (local $curPx i32) (local $grow i32) (local $off i32) (local $hitEdge i32)
 
+    (local.set $hitEdge (i32.const 0))
     ;; ---- round 0: the seed snake on diagonal 0 ----
     ;; Sentinels stop the snake: A[n] = -1 never equals B[ny] >= 0 or
     ;; B[m] = -2, and B[m] = -2 never equals A[nx] >= 0 or A[n] = -1.
@@ -72,6 +77,10 @@
             (i32.store (local.get $out) (i32.const 0))
             (i32.store offset=4 (local.get $out) (local.get $x))
             (return (i32.const 1))))))
+    ;; The seed snake touched an edge without finishing: later rounds
+    ;; must use the bounds-checked loop, not the interior fast path.
+    (if (i32.or (i32.eq (local.get $x) (local.get $n)) (i32.eq (local.get $y) (local.get $m)))
+      (then (local.set $hitEdge (i32.const 1))))
 
     ;; ---- forward rounds ----
     (local.set $d (i32.const 1))
@@ -135,51 +144,97 @@
                   (local.set $D (local.get $d))
                   (local.set $endJ (local.get $j))
                   (br $found))))))
-        ;; ---- j = 1 .. d-1: one trace load per iteration ----
+          (if (i32.or (i32.eq (local.get $nx) (local.get $n)) (i32.eq (local.get $ny) (local.get $m)))
+            (then (local.set $hitEdge (i32.const 1))))
+        ;; ---- j = 1 .. d-1: interior fast path while no edge is touched ----
+        ;; $hitEdge is 0 exactly while every entry of the previous round is
+        ;; interior (0 <= px < n and px - k_prev < m): then both candidates
+        ;; of every cell are valid, the deletion-vs-insertion choice is a
+        ;; branchless select, and the snake needs no bounds checks
+        ;; (sentinels A[n] = -1, B[m] = -2 stop it). Any cell that reaches
+        ;; x == n or y == m sets $hitEdge, and all later rounds use the
+        ;; bounds-checked loop below, which is the original code verbatim.
         (local.set $j (i32.const 1))
         (local.set $k (i32.sub (i32.const 2) (local.get $d)))
-        (block $innerDone
-          (loop $inner
-            (br_if $innerDone (i32.ge_s (local.get $j) (local.get $d)))
-            (local.set $curPx (i32.load (i32.add (local.get $prevPtr) (i32.shl (local.get $j) (i32.const 2)))))
-            (block $step
-              (local.set $xDel (i32.const -1))
-              (local.set $xIns (i32.const -1))
-              (if (i32.and (i32.ge_s (local.get $prevPx) (i32.const 0)) (i32.lt_s (local.get $prevPx) (local.get $n)))
-                (then (local.set $xDel (i32.add (local.get $prevPx) (i32.const 1)))))
-              (if (i32.and (i32.ge_s (local.get $curPx) (i32.const 0)) (i32.le_s (i32.sub (local.get $curPx) (local.get $k)) (local.get $m)))
-                (then (local.set $xIns (local.get $curPx))))
-              (if (i32.ge_s (local.get $xDel) (local.get $xIns))
-                (then
-                  (if (i32.lt_s (local.get $xDel) (i32.const 0))
-                    (then
-                      (i32.store (i32.add (local.get $curPtr) (i32.shl (local.get $j) (i32.const 2))) (i32.const -1))
-                      (br $step))
-                    (else (local.set $nx (local.get $xDel)))))
-                (else (local.set $nx (local.get $xIns))))
-              (local.set $ny (i32.sub (local.get $nx) (local.get $k)))
-              (block $sndone
-                (loop $sn
-                  (if (i32.eq
-                        (i32.load (i32.add (local.get $a) (i32.shl (local.get $nx) (i32.const 2))))
-                        (i32.load (i32.add (local.get $b) (i32.shl (local.get $ny) (i32.const 2)))))
-                    (then
+        (if (i32.eq (local.get $hitEdge) (i32.const 0))
+          (then
+            (block $fastDone
+              (loop $fast
+                (br_if $fastDone (i32.ge_s (local.get $j) (local.get $d)))
+                (local.set $curPx (i32.load (i32.add (local.get $prevPtr) (i32.shl (local.get $j) (i32.const 2)))))
+                ;; xDel = prevPx + 1, xIns = curPx; deletion wins the tie.
+                (local.set $nx (select
+                  (i32.add (local.get $prevPx) (i32.const 1))
+                  (local.get $curPx)
+                  (i32.ge_s (i32.add (local.get $prevPx) (i32.const 1)) (local.get $curPx))))
+                (local.set $ny (i32.sub (local.get $nx) (local.get $k)))
+                ;; Peeled snake: one compare; the loop only runs on a match
+                ;; (99.6% of cells have snake length 0).
+                (if (i32.eq
+                      (i32.load (i32.add (local.get $a) (i32.shl (local.get $nx) (i32.const 2))))
+                      (i32.load (i32.add (local.get $b) (i32.shl (local.get $ny) (i32.const 2)))))
+                  (then
+                    (loop $snF
                       (local.set $nx (i32.add (local.get $nx) (i32.const 1)))
                       (local.set $ny (i32.add (local.get $ny) (i32.const 1)))
-                      (br $sn)))
-                  (br $sndone)))
-              (i32.store (i32.add (local.get $curPtr) (i32.shl (local.get $j) (i32.const 2))) (local.get $nx))
-              (if (i32.eq (local.get $nx) (local.get $n))
-                (then
-                  (if (i32.eq (local.get $ny) (local.get $m))
+                      (br_if $snF (i32.eq
+                        (i32.load (i32.add (local.get $a) (i32.shl (local.get $nx) (i32.const 2))))
+                        (i32.load (i32.add (local.get $b) (i32.shl (local.get $ny) (i32.const 2)))))))))
+                (i32.store (i32.add (local.get $curPtr) (i32.shl (local.get $j) (i32.const 2))) (local.get $nx))
+                (if (i32.and (i32.eq (local.get $nx) (local.get $n)) (i32.eq (local.get $ny) (local.get $m)))
+                  (then
+                    (local.set $D (local.get $d))
+                    (local.set $endJ (local.get $j))
+                    (br $found)))
+                (if (i32.or (i32.eq (local.get $nx) (local.get $n)) (i32.eq (local.get $ny) (local.get $m)))
+                  (then (local.set $hitEdge (i32.const 1))))
+                (local.set $prevPx (local.get $curPx))
+                (local.set $j (i32.add (local.get $j) (i32.const 1)))
+                (local.set $k (i32.add (local.get $k) (i32.const 2)))
+                (br $fast))))
+          (else
+            (block $innerDone
+              (loop $inner
+                (br_if $innerDone (i32.ge_s (local.get $j) (local.get $d)))
+                (local.set $curPx (i32.load (i32.add (local.get $prevPtr) (i32.shl (local.get $j) (i32.const 2)))))
+                (block $step
+                  (local.set $xDel (i32.const -1))
+                  (local.set $xIns (i32.const -1))
+                  (if (i32.and (i32.ge_s (local.get $prevPx) (i32.const 0)) (i32.lt_s (local.get $prevPx) (local.get $n)))
+                    (then (local.set $xDel (i32.add (local.get $prevPx) (i32.const 1)))))
+                  (if (i32.and (i32.ge_s (local.get $curPx) (i32.const 0)) (i32.le_s (i32.sub (local.get $curPx) (local.get $k)) (local.get $m)))
+                    (then (local.set $xIns (local.get $curPx))))
+                  (if (i32.ge_s (local.get $xDel) (local.get $xIns))
                     (then
-                      (local.set $D (local.get $d))
-                      (local.set $endJ (local.get $j))
-                      (br $found))))))
-            (local.set $prevPx (local.get $curPx))
-            (local.set $j (i32.add (local.get $j) (i32.const 1)))
-            (local.set $k (i32.add (local.get $k) (i32.const 2)))
-            (br $inner)))
+                      (if (i32.lt_s (local.get $xDel) (i32.const 0))
+                        (then
+                          (i32.store (i32.add (local.get $curPtr) (i32.shl (local.get $j) (i32.const 2))) (i32.const -1))
+                          (br $step))
+                        (else (local.set $nx (local.get $xDel)))))
+                    (else (local.set $nx (local.get $xIns))))
+                  (local.set $ny (i32.sub (local.get $nx) (local.get $k)))
+                  (block $sndone
+                    (loop $sn
+                      (if (i32.eq
+                            (i32.load (i32.add (local.get $a) (i32.shl (local.get $nx) (i32.const 2))))
+                            (i32.load (i32.add (local.get $b) (i32.shl (local.get $ny) (i32.const 2)))))
+                        (then
+                          (local.set $nx (i32.add (local.get $nx) (i32.const 1)))
+                          (local.set $ny (i32.add (local.get $ny) (i32.const 1)))
+                          (br $sn)))
+                      (br $sndone)))
+                  (i32.store (i32.add (local.get $curPtr) (i32.shl (local.get $j) (i32.const 2))) (local.get $nx))
+                  (if (i32.eq (local.get $nx) (local.get $n))
+                    (then
+                      (if (i32.eq (local.get $ny) (local.get $m))
+                        (then
+                          (local.set $D (local.get $d))
+                          (local.set $endJ (local.get $j))
+                          (br $found))))))
+                (local.set $prevPx (local.get $curPx))
+                (local.set $j (i32.add (local.get $j) (i32.const 1)))
+                (local.set $k (i32.add (local.get $k) (i32.const 2)))
+                (br $inner)))))
         ;; ---- j = d: deletion only (k = d), $prevPx holds T[prevOff + d - 1] ----
         (local.set $j (local.get $d))
         (local.set $k (local.get $d))
@@ -215,6 +270,8 @@
                   (local.set $D (local.get $d))
                   (local.set $endJ (local.get $j))
                   (br $found))))))
+          (if (i32.or (i32.eq (local.get $nx) (local.get $n)) (i32.eq (local.get $ny) (local.get $m)))
+            (then (local.set $hitEdge (i32.const 1))))
         (local.set $d (i32.add (local.get $d) (i32.const 1)))
         (br $outer)))
 
