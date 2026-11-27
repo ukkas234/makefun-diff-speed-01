@@ -5,9 +5,10 @@
 [![reward](https://make.fun/badge/diff-speed-01-run-20261126/ukkas234/makefun-diff-speed-01/reward.svg)](https://make.fun/bounty/diff-speed-01-run-20261126?utm_source=github&utm_medium=readme&utm_campaign=diff-speed-01-run-20261126)
 
 A fast, exact re-implementation of `makefun-diff` 1.0.0, written from scratch
-in dependency-free JavaScript: it returns byte-identical output for every
-input, and runs about 3x faster than the reference on the practice set
-(~410 ms vs ~1,290 ms for 4 cases). Built by an AI agent for make.fun's
+in dependency-free JavaScript plus hand-written WebAssembly: it returns
+byte-identical output for every input, and runs about 4x faster than the
+reference on the practice set (~310 ms vs ~1,290 ms for 4 cases, local
+timing). Built by an AI agent for make.fun's
 "Diff two texts faster, 27 November 2026" bounty, $100 in USDC.
 
 ## How it is fast
@@ -17,13 +18,23 @@ input, and runs about 3x faster than the reference on the practice set
   integer compare.
 - Common prefix and suffix lines are trimmed before the search.
 - The Myers search keeps the furthest-reaching point per diagonal in one
-  flat typed-array trace, with the reference's exact rule: a deletion
-  wins every deletion-vs-insertion tie, no edge diagonal is pruned, and
-  equal-line runs are followed to the end, so the first path that reaches
-  both ends is the same script the reference returns.
-- The patch builder mirrors the reference's hunk rules (3 context lines,
-  runs at most 6 kept lines apart share a hunk, deletions before
-  insertions, `%` after a bare final line).
+  flat trace, with the reference's exact rule: a deletion wins every
+  deletion-vs-insertion tie, no edge diagonal is pruned, and equal-line
+  runs are followed to the end, so the first path that reaches both ends
+  is the same script the reference returns.
+- The O(D^2) search itself runs in hand-written WebAssembly
+  (`solve.wat`, assembled by the from-scratch assembler in
+  `tools/wat.cjs` into `solve.wasm`): the same greedy rule, at native
+  speed, with the pure-JavaScript search in `solve.js` kept as a
+  fallback. The patch builder mirrors the reference's hunk rules
+  (3 context lines, runs at most 6 kept lines apart share a hunk,
+  deletions before insertions, `%` after a bare final line).
+
+To rebuild the WebAssembly module from its source:
+
+```sh
+node tools/wat.cjs solve.wat solve.wasm
+```
 
 ## Run it
 

@@ -4,17 +4,57 @@
 // search compares ints, never strings), trim the common prefix/suffix, then
 // run Myers's greedy search exactly as makefun-diff defines it — furthest
 // point per diagonal, deletion wins a tie, no edge pruning, snakes followed
-// to the end — over typed arrays, with the per-round furthest points kept
-// in one flat trace so the script can be walked back without any object
-// allocation in the hot loop. The patch is then built from the runs with
-// the same hunk rule (3 lines of context, runs at most 6 kept lines apart
-// share a hunk, deletions before insertions, "%" after a line with no
-// newline).
+// to the end — in hand-written WebAssembly (solve.wat -> solve.wasm), with
+// the pure-JS search below as fallback. The patch is then built from the
+// runs with the same hunk rule (3 lines of context, runs at most 6 kept
+// lines apart share a hunk, deletions before insertions, "%" after a line
+// with no newline).
+
+import { readFileSync } from 'node:fs';
 
 const NO_NL = 0x40000000; // bit marking a last line that ends with no newline
 const KEEP = 0;
 const DEL = 1;
 const INS = 2;
+
+// The Myers search also exists as hand-written WebAssembly (solve.wat,
+// assembled by tools/wat.cjs into solve.wasm): the same greedy rule, but
+// the O(D^2) search runs at native speed instead of in JavaScript. The
+// pure-JS search below stays as the fallback (and for tiny inputs).
+const WASM_B = 0x40000;
+const WASM_OUT = 0x80000;
+const WASM_MAX_LINES = 60000;
+let wasm = undefined; // undefined = not tried yet, false = unavailable
+function getWasm() {
+  if (wasm !== undefined) return wasm;
+  try {
+    const bytes = readFileSync(new URL('./solve.wasm', import.meta.url));
+    const mod = new WebAssembly.Module(bytes);
+    wasm = new WebAssembly.Instance(mod, {}).exports;
+  } catch {
+    wasm = false;
+  }
+  return wasm;
+}
+/** The edit runs of a[a0..a1) into b[b0..b1), via WebAssembly; null on failure. */
+function editRunsWasm(A, a0, a1, B, b0, b1) {
+  const N = a1 - a0;
+  const M = b1 - b0;
+  if (N <= 0 || M <= 0 || N > WASM_MAX_LINES || M > WASM_MAX_LINES) return null;
+  const w = getWasm();
+  if (!w) return null;
+  // A fresh view each call: a memory.grow inside search detaches the old one.
+  const view = new Int32Array(w.mem.buffer);
+  view.set(A.subarray(a0, a1), 0);
+  view.set(B.subarray(b0, b1), WASM_B >> 2);
+  const count = w.search(0, N, WASM_B, M, WASM_OUT);
+  if (count < 0) return null; // trace would not fit in memory
+  const out = new Int32Array(w.mem.buffer);
+  const base = WASM_OUT >> 2;
+  const runs = [];
+  for (let i = 0; i < count; i++) runs.push([out[base + 2 * i], out[base + 2 * i + 1]]);
+  return runs;
+}
 
 /** Distinct line strings, shared by both texts of a case (and across cases). */
 const interned = new Map();
@@ -205,7 +245,8 @@ export function run(input) {
 
   const runs = [];
   if (prefix > 0) runs.push([KEEP, prefix]);
-  const mid = editRuns(a.ids, prefix, n - suffix, b.ids, prefix, m - suffix);
+  const mid = editRunsWasm(a.ids, prefix, n - suffix, b.ids, prefix, m - suffix)
+    ?? editRuns(a.ids, prefix, n - suffix, b.ids, prefix, m - suffix);
   for (let i = 0; i < mid.length; i++) runs.push(mid[i]);
   if (suffix > 0) runs.push([KEEP, suffix]);
 
