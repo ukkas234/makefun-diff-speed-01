@@ -3,7 +3,7 @@
 // Supported: (module (memory ...) (global ...) (func ...) (export ...)),
 // i32 arithmetic/comparisons, locals/globals, i32.load/store, memory.size/grow,
 // block/loop/if/else/br/br_if/return/call/drop/select/unreachable/nop.
-// Usage: node wat.js in.wat out.wasm
+// Usage: node tools/wat.cjs in.wat out.wasm
 'use strict';
 const fs = require('node:fs');
 
@@ -506,7 +506,7 @@ function assemble(src) {
 
 const [,, inPath, outPath] = process.argv;
 if (!inPath || !outPath) {
-  console.error('usage: node wat.js in.wat out.wasm');
+  console.error('usage: node tools/wat.cjs in.wat out.wasm');
   process.exit(2);
 }
 const src = fs.readFileSync(inPath, 'utf8');

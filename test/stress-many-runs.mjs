@@ -1,8 +1,8 @@
 // Regression test for the >32,768-runs overlap bug (Antigravity review §1.4).
 // The WASM `out` region once ended at $segBase = 0xC0000, holding only
 // 32,768 runs; a case emitting more runs overwrote unread backtrack
-// segments and silently corrupted the patch. $segBase is now 0x200000
-// (196,608 runs) and WASM memory is capped at 10240 pages (640 MiB).
+// segments and silently corrupted the patch. $segBase is now 0x280000
+// (262,144 runs) and WASM memory is capped at 10240 pages (640 MiB).
 //
 // Usage: node test/stress-many-runs.mjs [path-to-baseline-index.js]
 // The baseline defaults to the competition kit's makefun-diff 1.0.0 on
