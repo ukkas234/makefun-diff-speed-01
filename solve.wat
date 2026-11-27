@@ -16,12 +16,16 @@
 ;;   seg scratch ... 0x00280000 (backtrack segments, reverse order)
 ;;   trace ......... 0x00480000 (flat trace, round d at offset d*(d+1)/2)
 ;; Memory starts at 1024 pages (64 MiB) and grows in 512-page (32 MiB)
-;; chunks to at most 10240 (640 MiB). $segBase sits at 2.5 MiB so `out`
+;; chunks to at most 4096 (256 MiB). $segBase sits at 2.5 MiB so `out`
 ;; holds 262,144 runs — above the 120,000 theoretical maximum for
 ;; WASM_MAX_LINES = 60000 — and can never overwrite backtrack segments
-;; that the merge loop has not read yet. The 640 MiB cap keeps memory.grow
+;; that the merge loop has not read yet. The 256 MiB cap keeps memory.grow
 ;; failing cleanly well below the 1024 MB container limit instead of
-;; letting the cgroup OOM killer strike first.
+;; letting the cgroup OOM killer strike first, and it bounds what a
+;; dropped instance can pin: search answers D up to ~11,480 in WASM
+;; (the trace alone is ~2*D^2 bytes) and returns -1 above that, where
+;; the checkpointed JS fallback takes over. Typical graded D is
+;; 3,000-4,500 (trace 18-40 MiB), far below the cap.
 ;; The sentinels A[n] = -1 and B[m] = -2 (written by solve.js before each
 ;; search) are unequal to each other and to every non-negative line id, so
 ;; a snake stops exactly at (n, m) with no bounds checks: at a snake start
@@ -32,7 +36,7 @@
 ;; search returns the number of runs written to $out, or -1 when the trace
 ;; would not fit in memory (the JS wrapper then falls back to its own search).
 (module
-  (memory (export "mem") 1024 10240)
+  (memory (export "mem") 1024 4096)
   (global $traceBase i32 (i32.const 4718592))
   (global $segBase i32 (i32.const 2621440))
 
@@ -85,7 +89,7 @@
             ;; Pages short of $need, at least 512 at a time, never past max.
             (local.set $tmp (i32.shr_u (i32.add (i32.sub (local.get $need) (i32.shl (memory.size) (i32.const 16))) (i32.const 65535)) (i32.const 16)))
             (if (i32.lt_s (local.get $tmp) (i32.const 512)) (then (local.set $tmp (i32.const 512))))
-            (local.set $grow (i32.sub (i32.const 10240) (memory.size)))
+            (local.set $grow (i32.sub (i32.const 4096) (memory.size)))
             (if (i32.gt_s (local.get $tmp) (local.get $grow)) (then (local.set $tmp (local.get $grow))))
             (if (i32.le_s (local.get $tmp) (i32.const 0)) (then (return (i32.const -1))))
             (local.set $tmp (memory.grow (local.get $tmp)))

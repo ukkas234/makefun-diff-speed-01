@@ -24,11 +24,10 @@ function alternating(n) {
 
 let failed = 0;
 for (const [name, n] of [['stress-A-32770', 32770], ['stress-B-35000', 35000]]) {
-  // Stress A: 32,770 runs (> 32,768), D = 16,385 — the WASM path must
-  // answer it (trace ~537 MiB fits the 640 MiB cap). Stress B: 35,000
-  // runs, D = 17,500 — the trace (~612 MiB) does not fit, so search
-  // returns -1 and the JS fallback (with the WASM instance released)
-  // must answer it. Both must be byte-identical to the reference.
+  // Stress A: 32,770 runs (> 32,768), D = 16,385 — past the WASM trace
+  // cap (256 MiB), so search returns -1 and the checkpointed JS fallback
+  // must answer it. Stress B: 35,000 runs, D = 17,500 — same fallback
+  // path. Both must be byte-identical to the reference.
   const input = alternating(n);
   const mine = run(input);
   const ref = diffPatch(input);

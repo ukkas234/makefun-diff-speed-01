@@ -51,10 +51,13 @@ backtrack segments at 0x280000, so `out` holds 262,144 runs — above the
 120,000 theoretical maximum for 60,000-line inputs — and can never
 overwrite segments the merge loop has not read yet. The trace starts at
 0x480000; WASM linear memory starts at 1024 pages (64 MiB), grows in
-512-page (32 MiB) chunks, and is capped at 10240 pages (640 MiB) so
-`memory.grow` fails cleanly well below the 1024 MB container limit; if
-the trace ever does not fit, the search returns -1, the wrapper releases
-the WASM instance, and the pure-JS search answers instead.
+512-page (32 MiB) chunks, and is capped at 4096 pages (256 MiB) so
+`memory.grow` fails cleanly well below the 1024 MB container limit and
+a dropped instance can pin at most 256 MiB; if the trace ever does not
+fit (D past ~11,480), the search returns -1, the wrapper drops the
+WASM instance (a fresh one is built for the next case), and the
+checkpointed pure-JS search answers instead — rolling two-row frontier
+plus snapshots, so even D = 60,000 peaks far below the container limit.
 `test/stress-many-runs.mjs` covers both paths with alternating kept/deleted inputs of 32,770 and 35,000 lines.
 
 ## Run it

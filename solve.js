@@ -32,10 +32,10 @@ const INS = 2;
 // can rebuild them and compare byte for byte.
 const WASM_BYTES = new Uint8Array([
   0, 97, 115, 109, 1, 0, 0, 0, 1, 10, 1, 96, 5, 127, 127, 127,
-  127, 127, 1, 127, 3, 2, 1, 0, 5, 6, 1, 1, 128, 8, 128, 80,
+  127, 127, 1, 127, 3, 2, 1, 0, 5, 6, 1, 1, 128, 8, 128, 32,
   6, 17, 2, 127, 0, 65, 128, 128, 160, 2, 11, 127, 0, 65, 128, 128,
   160, 1, 11, 7, 16, 2, 3, 109, 101, 109, 2, 0, 6, 115, 101, 97,
-  114, 99, 104, 0, 0, 10, 195, 11, 1, 192, 11, 1, 32, 127, 65, 0,
+  114, 99, 104, 0, 0, 10, 194, 11, 1, 191, 11, 1, 32, 127, 65, 0,
   33, 8, 65, 0, 33, 9, 2, 64, 3, 64, 32, 0, 32, 8, 65, 2,
   116, 106, 40, 2, 0, 32, 2, 32, 9, 65, 2, 116, 106, 40, 2, 0,
   70, 4, 64, 32, 8, 65, 1, 106, 33, 8, 32, 9, 65, 1, 106, 33,
@@ -47,14 +47,28 @@ const WASM_BYTES = new Uint8Array([
   106, 65, 2, 116, 106, 33, 31, 32, 31, 63, 0, 65, 16, 116, 75, 4,
   64, 32, 31, 63, 0, 65, 16, 116, 107, 65, 255, 255, 3, 106, 65, 16,
   118, 33, 30, 32, 30, 65, 128, 4, 72, 4, 64, 65, 128, 4, 33, 30,
-  11, 65, 128, 208, 0, 63, 0, 107, 33, 35, 32, 30, 32, 35, 74, 4,
-  64, 32, 35, 33, 30, 11, 32, 30, 65, 0, 76, 4, 64, 65, 127, 15,
-  11, 32, 30, 64, 0, 33, 30, 32, 30, 65, 127, 70, 4, 64, 65, 127,
-  15, 11, 11, 35, 0, 32, 19, 65, 2, 116, 106, 33, 21, 35, 0, 32,
-  20, 65, 2, 116, 106, 33, 22, 32, 21, 40, 2, 0, 33, 33, 65, 0,
-  33, 6, 65, 0, 32, 5, 107, 33, 7, 2, 64, 65, 127, 33, 12, 65,
-  127, 33, 13, 32, 33, 65, 0, 78, 32, 33, 32, 7, 107, 32, 3, 76,
-  113, 4, 64, 32, 33, 33, 13, 11, 32, 12, 32, 13, 78, 4, 64, 32,
+  11, 65, 128, 32, 63, 0, 107, 33, 35, 32, 30, 32, 35, 74, 4, 64,
+  32, 35, 33, 30, 11, 32, 30, 65, 0, 76, 4, 64, 65, 127, 15, 11,
+  32, 30, 64, 0, 33, 30, 32, 30, 65, 127, 70, 4, 64, 65, 127, 15,
+  11, 11, 35, 0, 32, 19, 65, 2, 116, 106, 33, 21, 35, 0, 32, 20,
+  65, 2, 116, 106, 33, 22, 32, 21, 40, 2, 0, 33, 33, 65, 0, 33,
+  6, 65, 0, 32, 5, 107, 33, 7, 2, 64, 65, 127, 33, 12, 65, 127,
+  33, 13, 32, 33, 65, 0, 78, 32, 33, 32, 7, 107, 32, 3, 76, 113,
+  4, 64, 32, 33, 33, 13, 11, 32, 12, 32, 13, 78, 4, 64, 32, 12,
+  65, 0, 72, 4, 64, 32, 22, 32, 6, 65, 2, 116, 106, 65, 127, 54,
+  2, 0, 12, 2, 5, 32, 12, 33, 10, 11, 5, 32, 13, 33, 10, 11,
+  32, 10, 32, 7, 107, 33, 11, 2, 64, 3, 64, 32, 0, 32, 10, 65,
+  2, 116, 106, 40, 2, 0, 32, 2, 32, 11, 65, 2, 116, 106, 40, 2,
+  0, 70, 4, 64, 32, 10, 65, 1, 106, 33, 10, 32, 11, 65, 1, 106,
+  33, 11, 12, 1, 11, 12, 1, 11, 11, 32, 22, 32, 6, 65, 2, 116,
+  106, 32, 10, 54, 2, 0, 32, 10, 32, 1, 70, 4, 64, 32, 11, 32,
+  3, 70, 4, 64, 32, 5, 33, 23, 32, 6, 33, 24, 12, 4, 11, 11,
+  11, 65, 1, 33, 6, 65, 2, 32, 5, 107, 33, 7, 2, 64, 3, 64,
+  32, 6, 32, 5, 78, 13, 1, 32, 21, 32, 6, 65, 2, 116, 106, 40,
+  2, 0, 33, 34, 2, 64, 65, 127, 33, 12, 65, 127, 33, 13, 32, 33,
+  65, 0, 78, 32, 33, 32, 1, 72, 113, 4, 64, 32, 33, 65, 1, 106,
+  33, 12, 11, 32, 34, 65, 0, 78, 32, 34, 32, 7, 107, 32, 3, 76,
+  113, 4, 64, 32, 34, 33, 13, 11, 32, 12, 32, 13, 78, 4, 64, 32,
   12, 65, 0, 72, 4, 64, 32, 22, 32, 6, 65, 2, 116, 106, 65, 127,
   54, 2, 0, 12, 2, 5, 32, 12, 33, 10, 11, 5, 32, 13, 33, 10,
   11, 32, 10, 32, 7, 107, 33, 11, 2, 64, 3, 64, 32, 0, 32, 10,
@@ -62,84 +76,73 @@ const WASM_BYTES = new Uint8Array([
   2, 0, 70, 4, 64, 32, 10, 65, 1, 106, 33, 10, 32, 11, 65, 1,
   106, 33, 11, 12, 1, 11, 12, 1, 11, 11, 32, 22, 32, 6, 65, 2,
   116, 106, 32, 10, 54, 2, 0, 32, 10, 32, 1, 70, 4, 64, 32, 11,
-  32, 3, 70, 4, 64, 32, 5, 33, 23, 32, 6, 33, 24, 12, 4, 11,
-  11, 11, 65, 1, 33, 6, 65, 2, 32, 5, 107, 33, 7, 2, 64, 3,
-  64, 32, 6, 32, 5, 78, 13, 1, 32, 21, 32, 6, 65, 2, 116, 106,
-  40, 2, 0, 33, 34, 2, 64, 65, 127, 33, 12, 65, 127, 33, 13, 32,
-  33, 65, 0, 78, 32, 33, 32, 1, 72, 113, 4, 64, 32, 33, 65, 1,
-  106, 33, 12, 11, 32, 34, 65, 0, 78, 32, 34, 32, 7, 107, 32, 3,
-  76, 113, 4, 64, 32, 34, 33, 13, 11, 32, 12, 32, 13, 78, 4, 64,
-  32, 12, 65, 0, 72, 4, 64, 32, 22, 32, 6, 65, 2, 116, 106, 65,
-  127, 54, 2, 0, 12, 2, 5, 32, 12, 33, 10, 11, 5, 32, 13, 33,
-  10, 11, 32, 10, 32, 7, 107, 33, 11, 2, 64, 3, 64, 32, 0, 32,
-  10, 65, 2, 116, 106, 40, 2, 0, 32, 2, 32, 11, 65, 2, 116, 106,
-  40, 2, 0, 70, 4, 64, 32, 10, 65, 1, 106, 33, 10, 32, 11, 65,
-  1, 106, 33, 11, 12, 1, 11, 12, 1, 11, 11, 32, 22, 32, 6, 65,
-  2, 116, 106, 32, 10, 54, 2, 0, 32, 10, 32, 1, 70, 4, 64, 32,
-  11, 32, 3, 70, 4, 64, 32, 5, 33, 23, 32, 6, 33, 24, 12, 6,
-  11, 11, 11, 32, 34, 33, 33, 32, 6, 65, 1, 106, 33, 6, 32, 7,
-  65, 2, 106, 33, 7, 12, 0, 11, 11, 32, 5, 33, 6, 32, 5, 33,
-  7, 2, 64, 65, 127, 33, 12, 65, 127, 33, 13, 32, 33, 65, 0, 78,
-  32, 33, 32, 1, 72, 113, 4, 64, 32, 33, 65, 1, 106, 33, 12, 11,
-  32, 12, 32, 13, 78, 4, 64, 32, 12, 65, 0, 72, 4, 64, 32, 22,
-  32, 6, 65, 2, 116, 106, 65, 127, 54, 2, 0, 12, 2, 5, 32, 12,
-  33, 10, 11, 5, 32, 13, 33, 10, 11, 32, 10, 32, 7, 107, 33, 11,
-  2, 64, 3, 64, 32, 0, 32, 10, 65, 2, 116, 106, 40, 2, 0, 32,
-  2, 32, 11, 65, 2, 116, 106, 40, 2, 0, 70, 4, 64, 32, 10, 65,
-  1, 106, 33, 10, 32, 11, 65, 1, 106, 33, 11, 12, 1, 11, 12, 1,
-  11, 11, 32, 22, 32, 6, 65, 2, 116, 106, 32, 10, 54, 2, 0, 32,
-  10, 32, 1, 70, 4, 64, 32, 11, 32, 3, 70, 4, 64, 32, 5, 33,
-  23, 32, 6, 33, 24, 12, 4, 11, 11, 11, 32, 5, 65, 1, 106, 33,
-  5, 12, 0, 11, 11, 65, 0, 33, 25, 32, 24, 33, 6, 32, 1, 33,
-  8, 32, 3, 33, 9, 32, 23, 33, 5, 32, 5, 32, 5, 65, 1, 106,
-  108, 65, 2, 109, 33, 36, 2, 64, 3, 64, 32, 5, 65, 1, 72, 4,
-  64, 12, 2, 11, 32, 6, 65, 1, 116, 32, 5, 107, 33, 7, 32, 36,
-  32, 5, 107, 33, 19, 32, 19, 33, 36, 35, 0, 32, 19, 65, 2, 116,
-  106, 33, 21, 65, 127, 33, 15, 65, 127, 33, 16, 32, 6, 65, 0, 74,
-  4, 64, 32, 21, 32, 6, 65, 1, 107, 65, 2, 116, 106, 40, 2, 0,
-  33, 15, 11, 32, 6, 32, 5, 72, 4, 64, 32, 21, 32, 6, 65, 2,
-  116, 106, 40, 2, 0, 33, 16, 11, 65, 127, 33, 17, 65, 127, 33, 18,
-  32, 15, 65, 0, 78, 32, 15, 32, 1, 72, 113, 4, 64, 32, 15, 65,
-  1, 106, 33, 17, 11, 32, 16, 65, 0, 78, 32, 16, 32, 7, 107, 32,
-  3, 76, 113, 4, 64, 32, 16, 33, 18, 11, 32, 17, 32, 18, 78, 4,
-  64, 32, 8, 32, 15, 65, 1, 106, 107, 33, 32, 32, 32, 65, 0, 74,
-  4, 64, 35, 1, 32, 25, 65, 3, 116, 106, 65, 0, 54, 2, 0, 35,
-  1, 32, 25, 65, 3, 116, 106, 32, 32, 54, 2, 4, 32, 25, 65, 1,
-  106, 33, 25, 11, 35, 1, 32, 25, 65, 3, 116, 106, 65, 1, 54, 2,
-  0, 35, 1, 32, 25, 65, 3, 116, 106, 65, 1, 54, 2, 4, 32, 25,
-  65, 1, 106, 33, 25, 32, 15, 33, 8, 32, 15, 32, 7, 65, 1, 107,
-  107, 33, 9, 32, 6, 65, 1, 107, 33, 6, 5, 32, 8, 32, 16, 107,
-  33, 32, 32, 32, 65, 0, 74, 4, 64, 35, 1, 32, 25, 65, 3, 116,
-  106, 65, 0, 54, 2, 0, 35, 1, 32, 25, 65, 3, 116, 106, 32, 32,
-  54, 2, 4, 32, 25, 65, 1, 106, 33, 25, 11, 35, 1, 32, 25, 65,
-  3, 116, 106, 65, 2, 54, 2, 0, 35, 1, 32, 25, 65, 3, 116, 106,
-  65, 1, 54, 2, 4, 32, 25, 65, 1, 106, 33, 25, 32, 16, 33, 8,
-  32, 16, 32, 7, 65, 1, 106, 107, 33, 9, 11, 32, 5, 65, 1, 107,
-  33, 5, 12, 0, 11, 11, 32, 8, 65, 0, 74, 4, 64, 35, 1, 32,
-  25, 65, 3, 116, 106, 65, 0, 54, 2, 0, 35, 1, 32, 25, 65, 3,
-  116, 106, 32, 8, 54, 2, 4, 32, 25, 65, 1, 106, 33, 25, 11, 65,
-  0, 33, 26, 32, 25, 65, 1, 107, 33, 27, 2, 64, 3, 64, 32, 27,
-  65, 0, 72, 4, 64, 12, 2, 11, 35, 1, 32, 27, 65, 3, 116, 106,
-  40, 2, 0, 33, 28, 35, 1, 32, 27, 65, 3, 116, 106, 40, 2, 4,
-  33, 29, 32, 26, 65, 0, 74, 32, 28, 32, 4, 32, 26, 65, 1, 107,
-  65, 3, 116, 106, 40, 2, 0, 70, 113, 4, 64, 32, 4, 32, 26, 65,
-  1, 107, 65, 3, 116, 106, 32, 4, 32, 26, 65, 1, 107, 65, 3, 116,
-  106, 40, 2, 4, 32, 29, 106, 54, 2, 4, 5, 32, 4, 32, 26, 65,
-  3, 116, 106, 32, 28, 54, 2, 0, 32, 4, 32, 26, 65, 3, 116, 106,
-  32, 29, 54, 2, 4, 32, 26, 65, 1, 106, 33, 26, 11, 32, 27, 65,
-  1, 107, 33, 27, 12, 0, 11, 11, 32, 26, 11
+  32, 3, 70, 4, 64, 32, 5, 33, 23, 32, 6, 33, 24, 12, 6, 11,
+  11, 11, 32, 34, 33, 33, 32, 6, 65, 1, 106, 33, 6, 32, 7, 65,
+  2, 106, 33, 7, 12, 0, 11, 11, 32, 5, 33, 6, 32, 5, 33, 7,
+  2, 64, 65, 127, 33, 12, 65, 127, 33, 13, 32, 33, 65, 0, 78, 32,
+  33, 32, 1, 72, 113, 4, 64, 32, 33, 65, 1, 106, 33, 12, 11, 32,
+  12, 32, 13, 78, 4, 64, 32, 12, 65, 0, 72, 4, 64, 32, 22, 32,
+  6, 65, 2, 116, 106, 65, 127, 54, 2, 0, 12, 2, 5, 32, 12, 33,
+  10, 11, 5, 32, 13, 33, 10, 11, 32, 10, 32, 7, 107, 33, 11, 2,
+  64, 3, 64, 32, 0, 32, 10, 65, 2, 116, 106, 40, 2, 0, 32, 2,
+  32, 11, 65, 2, 116, 106, 40, 2, 0, 70, 4, 64, 32, 10, 65, 1,
+  106, 33, 10, 32, 11, 65, 1, 106, 33, 11, 12, 1, 11, 12, 1, 11,
+  11, 32, 22, 32, 6, 65, 2, 116, 106, 32, 10, 54, 2, 0, 32, 10,
+  32, 1, 70, 4, 64, 32, 11, 32, 3, 70, 4, 64, 32, 5, 33, 23,
+  32, 6, 33, 24, 12, 4, 11, 11, 11, 32, 5, 65, 1, 106, 33, 5,
+  12, 0, 11, 11, 65, 0, 33, 25, 32, 24, 33, 6, 32, 1, 33, 8,
+  32, 3, 33, 9, 32, 23, 33, 5, 32, 5, 32, 5, 65, 1, 106, 108,
+  65, 2, 109, 33, 36, 2, 64, 3, 64, 32, 5, 65, 1, 72, 4, 64,
+  12, 2, 11, 32, 6, 65, 1, 116, 32, 5, 107, 33, 7, 32, 36, 32,
+  5, 107, 33, 19, 32, 19, 33, 36, 35, 0, 32, 19, 65, 2, 116, 106,
+  33, 21, 65, 127, 33, 15, 65, 127, 33, 16, 32, 6, 65, 0, 74, 4,
+  64, 32, 21, 32, 6, 65, 1, 107, 65, 2, 116, 106, 40, 2, 0, 33,
+  15, 11, 32, 6, 32, 5, 72, 4, 64, 32, 21, 32, 6, 65, 2, 116,
+  106, 40, 2, 0, 33, 16, 11, 65, 127, 33, 17, 65, 127, 33, 18, 32,
+  15, 65, 0, 78, 32, 15, 32, 1, 72, 113, 4, 64, 32, 15, 65, 1,
+  106, 33, 17, 11, 32, 16, 65, 0, 78, 32, 16, 32, 7, 107, 32, 3,
+  76, 113, 4, 64, 32, 16, 33, 18, 11, 32, 17, 32, 18, 78, 4, 64,
+  32, 8, 32, 15, 65, 1, 106, 107, 33, 32, 32, 32, 65, 0, 74, 4,
+  64, 35, 1, 32, 25, 65, 3, 116, 106, 65, 0, 54, 2, 0, 35, 1,
+  32, 25, 65, 3, 116, 106, 32, 32, 54, 2, 4, 32, 25, 65, 1, 106,
+  33, 25, 11, 35, 1, 32, 25, 65, 3, 116, 106, 65, 1, 54, 2, 0,
+  35, 1, 32, 25, 65, 3, 116, 106, 65, 1, 54, 2, 4, 32, 25, 65,
+  1, 106, 33, 25, 32, 15, 33, 8, 32, 15, 32, 7, 65, 1, 107, 107,
+  33, 9, 32, 6, 65, 1, 107, 33, 6, 5, 32, 8, 32, 16, 107, 33,
+  32, 32, 32, 65, 0, 74, 4, 64, 35, 1, 32, 25, 65, 3, 116, 106,
+  65, 0, 54, 2, 0, 35, 1, 32, 25, 65, 3, 116, 106, 32, 32, 54,
+  2, 4, 32, 25, 65, 1, 106, 33, 25, 11, 35, 1, 32, 25, 65, 3,
+  116, 106, 65, 2, 54, 2, 0, 35, 1, 32, 25, 65, 3, 116, 106, 65,
+  1, 54, 2, 4, 32, 25, 65, 1, 106, 33, 25, 32, 16, 33, 8, 32,
+  16, 32, 7, 65, 1, 106, 107, 33, 9, 11, 32, 5, 65, 1, 107, 33,
+  5, 12, 0, 11, 11, 32, 8, 65, 0, 74, 4, 64, 35, 1, 32, 25,
+  65, 3, 116, 106, 65, 0, 54, 2, 0, 35, 1, 32, 25, 65, 3, 116,
+  106, 32, 8, 54, 2, 4, 32, 25, 65, 1, 106, 33, 25, 11, 65, 0,
+  33, 26, 32, 25, 65, 1, 107, 33, 27, 2, 64, 3, 64, 32, 27, 65,
+  0, 72, 4, 64, 12, 2, 11, 35, 1, 32, 27, 65, 3, 116, 106, 40,
+  2, 0, 33, 28, 35, 1, 32, 27, 65, 3, 116, 106, 40, 2, 4, 33,
+  29, 32, 26, 65, 0, 74, 32, 28, 32, 4, 32, 26, 65, 1, 107, 65,
+  3, 116, 106, 40, 2, 0, 70, 113, 4, 64, 32, 4, 32, 26, 65, 1,
+  107, 65, 3, 116, 106, 32, 4, 32, 26, 65, 1, 107, 65, 3, 116, 106,
+  40, 2, 4, 32, 29, 106, 54, 2, 4, 5, 32, 4, 32, 26, 65, 3,
+  116, 106, 32, 28, 54, 2, 0, 32, 4, 32, 26, 65, 3, 116, 106, 32,
+  29, 54, 2, 4, 32, 26, 65, 1, 106, 33, 26, 11, 32, 27, 65, 1,
+  107, 33, 27, 12, 0, 11, 11, 32, 26, 11,
 ]);
 const WASM_B = 0x40000;
 const WASM_OUT = 0x80000;
 const WASM_MAX_LINES = 60000;
-let wasm = undefined; // undefined = not tried yet, false = unavailable
+let wasm = undefined; // undefined = not instantiated, false = instantiation failed
+let wasmDead = false; // true once instantiation has failed: never retry
 function getWasm() {
+  if (wasmDead) return false;
   if (wasm !== undefined) return wasm;
   try {
     const mod = new WebAssembly.Module(WASM_BYTES);
     wasm = new WebAssembly.Instance(mod, {}).exports;
   } catch {
     wasm = false;
+    wasmDead = true;
   }
   return wasm;
 }
@@ -161,10 +164,12 @@ function editRunsWasm(A, a0, a1, B, b0, b1) {
   view[(WASM_B >> 2) + M] = -2;
   const count = w.search(0, N, WASM_B, M, WASM_OUT);
   if (count < 0) {
-    // The trace would not fit: release the WASM instance (and its grown
-    // linear memory) before the JS fallback allocates its own flat trace,
-    // or the two would live side by side inside the 1024 MB container.
-    wasm = false;
+    // The trace would not fit: drop the WASM instance (and its grown
+    // linear memory) so the JS fallback does not have to share the
+    // container with it. The next case re-instantiates a fresh instance
+    // (getWasm retries while wasmDead is false), so one huge case does
+    // not permanently disable WASM for the small cases after it.
+    wasm = undefined;
     return null;
   }
   const out = new Int32Array(w.mem.buffer);
@@ -262,109 +267,80 @@ function internSlice(parts, lo, hi, lastBare, lookupOnly) {
   return ids;
 }
 
-/** One flat trace of furthest points: round d, diagonal j holds its x. */
-let trace = new Int32Array(1 << 16);
-let traceCap = 1 << 16;
+// Snapshot interval of the checkpointed forward search (see editRuns).
+const CHECK_B = 256;
 
 /**
- * The edit runs of a[a0..a1) into b[b0..b1) as [kind, count] pairs, by the
- * exact greedy rule: furthest point per diagonal, deletion wins a tie.
- * Runs are returned in order, adjacent runs of one kind already merged.
+ * One Myers cell: the furthest x on diagonal k = 2j-d at round d, from the
+ * previous round's row `prevRow` (whose entry 0 is diagonal `prevBase`).
+ * Returns -1 when the diagonal is unreachable. Deletion wins a tie, the
+ * snake is followed to the end — exactly makefun-diff's rule, shared
+ * verbatim by the forward pass and by the block replays below, so both
+ * compute the same cells.
  */
-function editRuns(A, a0, a1, B, b0, b1) {
-  const N = a1 - a0;
-  const M = b1 - b0;
-  if (N === 0) return M === 0 ? [] : [[INS, M]];
-  if (M === 0) return [[DEL, N]];
-  const AA = A.subarray(a0, a1);
-  const BB = B.subarray(b0, b1);
-
-  // The trace lives in one flat array; round d holds d+1 entries at
-  // offset d*(d+1)/2, diagonal k = 2j-d at index j. Grow it as needed.
-  let T = trace;
-  let cap = traceCap;
-  const ensure = (d) => {
-    const need = ((d * (d + 1)) / 2) + d + 1;
-    if (need <= cap) return;
-    let c = cap;
-    while (c < need) c *= 2;
-    const next = new Int32Array(c);
-    next.set(T.subarray(0, cap));
-    T = next;
-    cap = c;
-  };
-
-  // Round 0: the seed snake on diagonal 0.
-  let x = 0;
-  let y = 0;
-  while (x < N && y < M && AA[x] === BB[y]) {
-    x++;
-    y++;
+function myersCell(prevRow, prevBase, j, d, N, M, AA, BB) {
+  const k = 2 * j - d;
+  let xDel = -1;
+  let xIns = -1;
+  if (j > 0) {
+    const px = prevRow[j - 1 - prevBase];
+    if (px >= 0 && px < N) xDel = px + 1;
   }
-  ensure(0);
-  T[0] = x;
-  if (x === N && y === M) {
-    trace = T;
-    traceCap = cap;
-    return [[KEEP, x]];
+  if (j < d) {
+    const px = prevRow[j - prevBase];
+    if (px >= 0 && px - k <= M) xIns = px;
   }
+  let nx;
+  if (xDel >= xIns) {
+    if (xDel < 0) return -1;
+    nx = xDel;
+  } else {
+    nx = xIns;
+  }
+  let ny = nx - k;
+  while (nx < N && ny < M && AA[nx] === BB[ny]) {
+    nx++;
+    ny++;
+  }
+  return nx;
+}
 
-  let D = -1;
-  let endJ = 0;
-  outer: for (let d = 1; ; d++) {
-    ensure(d);
-    const prevOff = ((d - 1) * d) / 2;
-    const curOff = (d * (d + 1)) / 2;
-    let k = -d;
-    for (let j = 0; j <= d; j++, k += 2) {
-      let xDel = -1;
-      let xIns = -1;
-      if (j > 0) {
-        const px = T[prevOff + j - 1];
-        if (px >= 0 && px < N) xDel = px + 1;
-      }
-      if (j < d) {
-        const px = T[prevOff + j];
-        if (px >= 0 && px - k <= M) xIns = px;
-      }
-      let nx;
-      if (xDel >= xIns) {
-        if (xDel < 0) {
-          T[curOff + j] = -1;
-          continue;
-        }
-        nx = xDel;
-      } else {
-        nx = xIns;
-      }
-      let ny = nx - k;
-      while (nx < N && ny < M && AA[nx] === BB[ny]) {
-        nx++;
-        ny++;
-      }
-      T[curOff + j] = nx;
-      if (nx === N && ny === M) {
-        D = d;
-        endJ = j;
-        break outer;
-      }
+/**
+ * Backtrack one block [d0, d1] (d0 a snapshot round, d0 < d1) ending at
+ * diagonal j1 with the path at (x, y, j). Only the diagonals that can
+ * reach j1 are replayed: at round d the cone is [j1-(d1-d), j1], so the
+ * replay triangle holds (d1-d0+1)(d1-d0+2)/2 cells. The replayed cells
+ * see the exact same predecessors as the forward pass (the cone is
+ * closed under the recurrence: a cell reads round d-1 at j-1 and j, and
+ * both are inside the previous round's cone), so the segments are
+ * identical to a full flat trace. Returns the position [x, y, j] at
+ * round d0.
+ */
+function backtrackBlock(d0, d1, j1, x, y, j, snaps, N, M, AA, BB, segs) {
+  const rows = [snaps[d0 / CHECK_B]];
+  const bases = [0];
+  for (let r = 1; r <= d1 - d0; r++) {
+    const d = d0 + r;
+    const jLo = Math.max(0, j1 - (d1 - d));
+    const jHi = Math.min(d, j1);
+    const row = new Int32Array(jHi - jLo + 1);
+    const prevRow = rows[r - 1];
+    const prevBase = bases[r - 1];
+    for (let jj = jLo; jj <= jHi; jj++) {
+      row[jj - jLo] = myersCell(prevRow, prevBase, jj, d, N, M, AA, BB);
     }
+    rows.push(row);
+    bases.push(jLo);
   }
-  trace = T;
-  traceCap = cap;
-
-  // Walk the trace back, collecting (in reverse) each round's snake and move.
-  const segs = [];
-  let j = endJ;
-  x = N;
-  y = M;
-  for (let d = D; d >= 1; d--) {
+  for (let d = d1; d > d0; d--) {
     const k = 2 * j - d;
-    const prevOff = ((d - 1) * d) / 2;
+    const r = d - 1 - d0;
+    const row = rows[r];
+    const base = bases[r];
     let pxDel = -1;
     let pxIns = -1;
-    if (j > 0) pxDel = T[prevOff + j - 1];
-    if (j < d) pxIns = T[prevOff + j];
+    if (j > 0) pxDel = row[j - 1 - base];
+    if (j < d) pxIns = row[j - base];
     const delOk = pxDel >= 0 && pxDel < N;
     const insOk = pxIns >= 0 && pxIns - k <= M;
     const delX = delOk ? pxDel + 1 : -1;
@@ -383,6 +359,91 @@ function editRuns(A, a0, a1, B, b0, b1) {
       x = pxIns;
       y = pxIns - (k + 1);
     }
+  }
+  return [x, y, j];
+}
+
+/**
+ * The edit runs of a[a0..a1) into b[b0..b1) as [kind, count] pairs, by the
+ * exact greedy rule: furthest point per diagonal, deletion wins a tie.
+ * Runs are returned in order, adjacent runs of one kind already merged.
+ *
+ * Checkpointed forward Myers: the forward pass keeps two rolling rows
+ * and a copy of the frontier every CHECK_B rounds; backtracking replays
+ * only each block's dependency cone. Peak memory is O(D^2 / CHECK_B)
+ * ints for snapshots (~56 MB even at D = 120,000) plus O(CHECK_B^2)
+ * ints for one replay triangle — the flat trace it replaces needed
+ * O(D^2) ints and grew it by doubling (1.5 GiB live at D = 16,383),
+ * which OOM-killed the 1024 MB grading container on any fallback case
+ * past D ~ 17,000. The replay recomputes the exact same cells with the
+ * exact same recurrence and tie-break, so the runs are identical.
+ * Nothing here is retained between calls: snapshots and rows are local,
+ * so no trace is ever pinned after a huge case.
+ */
+export function editRuns(A, a0, a1, B, b0, b1) {
+  const N = a1 - a0;
+  const M = b1 - b0;
+  if (N === 0) return M === 0 ? [] : [[INS, M]];
+  if (M === 0) return [[DEL, N]];
+  const AA = A.subarray(a0, a1);
+  const BB = B.subarray(b0, b1);
+
+  // Round 0: the seed snake on diagonal 0.
+  let x = 0;
+  let y = 0;
+  while (x < N && y < M && AA[x] === BB[y]) {
+    x++;
+    y++;
+  }
+  if (x === N && y === M) return [[KEEP, x]];
+
+  // Forward pass: two rolling rows (reused buffers, grown by doubling)
+  // and a snapshot of the frontier every CHECK_B rounds.
+  const snaps = [new Int32Array([x])];
+  let rowCap = 1024;
+  let rowA = new Int32Array(rowCap);
+  let rowB = new Int32Array(rowCap);
+  let prev = rowA;
+  let cur = rowB;
+  prev[0] = x;
+  let D = -1;
+  let endJ = 0;
+  outer: for (let d = 1; ; d++) {
+    if (d + 1 > rowCap) {
+      rowCap *= 2;
+      const nA = new Int32Array(rowCap);
+      const nB = new Int32Array(rowCap);
+      nA.set(prev.subarray(0, d));
+      rowA = nA;
+      rowB = nB;
+      prev = rowA;
+      cur = rowB;
+    }
+    for (let j = 0; j <= d; j++) {
+      const nx = myersCell(prev, 0, j, d, N, M, AA, BB);
+      cur[j] = nx;
+      if (nx === N && nx - (2 * j - d) === M) {
+        D = d;
+        endJ = j;
+        break outer;
+      }
+    }
+    if (d % CHECK_B === 0) snaps.push(cur.slice(0, d + 1));
+    const tmp = prev;
+    prev = cur;
+    cur = tmp;
+  }
+
+  // Walk the blocks back, from [floor((D-1)/B)*B, D] down to [0, ...].
+  const segs = [];
+  let j = endJ;
+  x = N;
+  y = M;
+  let d1 = D;
+  while (d1 > 0) {
+    const d0 = Math.floor((d1 - 1) / CHECK_B) * CHECK_B;
+    [x, y, j] = backtrackBlock(d0, d1, j, x, y, j, snaps, N, M, AA, BB, segs);
+    d1 = d0;
   }
   if (x > 0) segs.push([KEEP, x]);
 
